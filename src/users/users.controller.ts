@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException, BadRequestException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -10,29 +10,45 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto):Promise<User> {
-    return this.usersService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    try {
+      return await this.usersService.create(createUserDto);
+    } catch (error) {
+      throw new BadRequestException('Could not create user');
+    }
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  async findAll(): Promise<User[]> {
+    return await this.usersService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param() params: UserIdParamsDto) {
-    const {id} = params;
-    return this.usersService.findOne(id);
+  async findOne(@Param() params: UserIdParamsDto): Promise<User> {
+    const { id } = params;
+    try {
+      return await this.usersService.findOne(id);
+    } catch (error) {
+      throw new NotFoundException('User not found');
+    }
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
+    try {
+      return await this.usersService.update(id, updateUserDto);
+    } catch (error) {
+      throw new BadRequestException('Could not update user');
+    }
   }
 
   @Delete(':id')
-  remove(@Param() params: UserIdParamsDto) {
-    const {id} = params;
-    return this.usersService.remove(id);
+  async remove(@Param() params: UserIdParamsDto): Promise<User> {
+    const { id } = params;
+    try {
+      return await this.usersService.remove(id);
+    } catch (error) {
+      throw new NotFoundException('User not found');
+    }
   }
 }

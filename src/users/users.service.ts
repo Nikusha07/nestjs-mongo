@@ -10,16 +10,17 @@ export class UsersService implements OnModuleInit {
   constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {}
   async onModuleInit() {
     const count = await this.userModel.countDocuments();
-    if(count === 0) {
+    if (count === 0) {
       const userToInsert = [];
-      for(let i = 0; i < 3; i++){
-        const user : User = {
+      console.log("count--->", count);
+      for (let i = 0; i < 1000; i++) {
+        const user: CreateUserDto = {
           name: faker.person.firstName(),
-          age: faker.number.int({min:0, max:100})
+          age: faker.number.int({ min: 0, max: 100 })
         };
         userToInsert.push(user);
       }
-      console.log(userToInsert)
+      await this.userModel.insertMany(userToInsert);
     }
   }
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -35,8 +36,8 @@ export class UsersService implements OnModuleInit {
     }
   }
 
-  findAll() {
-    return this.userModel.find();
+  findAll(page: number = 1, limit: number = 10) {
+    return this.userModel.find().skip((page - 1) * limit).limit(limit);
   }
 
   async findOne(id: string): Promise<User> {
@@ -47,9 +48,12 @@ export class UsersService implements OnModuleInit {
     return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    this.userModel.findByIdAndUpdate(id, updateUserDto , {new : true});
-    return `This action updates a #${id} user`;
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const updatedUser = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true });
+    if (!updatedUser) {
+      throw new NotFoundException('User not found');
+    }
+    return updatedUser;
   }
 
   async remove(id: string) {
